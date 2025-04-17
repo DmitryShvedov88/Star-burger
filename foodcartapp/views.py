@@ -2,8 +2,9 @@ import json
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
-# import requests
 from .models import Product, Order, OrderProduct
+from rest_framework import status
+from rest_framework.response import Response
 
 
 def banners_list_api(request):
@@ -32,7 +33,6 @@ def banners_list_api(request):
 
 def product_list_api(request):
     products = Product.objects.select_related('category').available()
-
     dumped_products = []
     for product in products:
         dumped_product = {
@@ -52,38 +52,47 @@ def product_list_api(request):
             }
         }
         dumped_products.append(dumped_product)
-    # print("dumped_products")
-    # print(dumped_products)
     return JsonResponse(dumped_products, safe=False, json_dumps_params={
         'ensure_ascii': False,
         'indent': 4,
     })
 
+
 @api_view(['POST'])
 def register_order(request):
     try:
         data = json.loads(request.body.decode())
-        # print("data")
-        # print(data)
-        order = Order.objects.create(
-            first_name=data["firstname"],
-            last_name=data["lastname"],
-            contact_phone=data["phonenumber"],
-            adress=data["address"]
-        )
-
-        for product in data["products"]:
-            # print("product")
-            product_id = product["product"]
-            quantity = product["quantity"]
-            product = Product.objects.get(id=product_id)
-            OrderProduct.objects.create(
-                product=product,
-                order=order,
-                quantity=quantity
+        print(data)
+        if isinstance(data['products'], list) or data['products']:
+            order = Order.objects.create(
+                first_name=data["firstname"],
+                last_name=data["lastname"],
+                contact_phone=data["phonenumber"],
+                adress=data["address"]
             )
-    except ValueError:
-        return JsonResponse({
-            'error': 'ValueError',
-        })
+            for product in data["products"]:
+                try:
+                    product_id = product["product"]
+                    quantity = product["quantity"]
+                    product = Product.objects.get(id=product_id)
+                    OrderProduct.objects.create(
+                        product=product,
+                        order=order,
+                        quantity=quantity
+                    )
+                except Product.DoesNotExist:
+                    return Response(
+                        {'error':  f'There are no such {product} in your order'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                return Response(
+                    {'error':  'There are no products in your order'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_404_NOT_FOUND
+        )
     return JsonResponse({})
