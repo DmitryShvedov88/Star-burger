@@ -5,5 +5,3 @@ Pillow==8.2.0
 environs[django]==9.3.2
 phonenumbers==8.13.50
 django-phonenumber-field==8.0.0
-jsonschema==*
-cerberus==*
