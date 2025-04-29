@@ -85,20 +85,19 @@ def register_order(request):
     serializer.is_valid(raise_exception=True)
 
     order = Order.objects.create(
-        firstname=serializer.validated_data['firstname'],
-        lastname=serializer.validated_data['lastname'],
-        contact_phone=serializer.validated_data['phonenumber'],
-        adress=serializer.validated_data['address']
+        firstname=serializer.is_valid['firstname'],
+        lastname=serializer.is_valid['lastname'],
+        contact_phone=serializer.is_valid['phonenumber'],
+        adress=serializer.is_valid['address']
         )
 
     serializer_product = OrderSerializer(data=request.data)
     serializer_product.is_valid(raise_exception=True)
-    for product in serializer_product.validated_data['products']:
+    for product in serializer_product.is_valid['products']:
         product_id = get_object_or_404(Product, product["product"])
-        quantity = product["quantity"]
         OrderProduct.objects.create(
-            product=product_id,
+            product=serializer_product.is_valid["product_id"],
             order=order,
-            quantity=quantity
+            quantity=serializer_product.is_valid["quantity"]
             )
     return Response({'error': 'Заказ записан'}, status=status.HTTP_201_CREATED)
