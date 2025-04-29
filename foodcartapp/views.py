@@ -90,7 +90,10 @@ def register_order(request):
         contact_phone=serializer.validated_data['phonenumber'],
         adress=serializer.validated_data['address']
         )
-    for product in serializer.validated_data['products']:
+
+    serializer_product = OrderSerializer(data=request.data)
+    serializer_product.is_valid(raise_exception=True)
+    for product in serializer_product.validated_data['products']:
         product_id = get_object_or_404(Product, product["product"])
         quantity = product["quantity"]
         OrderProduct.objects.create(
