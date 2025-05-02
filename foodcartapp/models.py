@@ -140,7 +140,7 @@ class Order(models.Model):
         'адрес',
         max_length=250
     )
-    order_products = models.ManyToManyField(
+    products = models.ManyToManyField(
         Product,
     )
     verbose_name = 'заказ'
