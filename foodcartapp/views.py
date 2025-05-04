@@ -35,6 +35,7 @@ def banners_list_api(request):
 
 
 def product_list_api(request):
+    print("def product_list_api(request):")
     products = Product.objects.select_related('category').available()
     dumped_products = []
     for product in products:
@@ -74,16 +75,17 @@ class OrderProductSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'product', 'order', 'quantity'
+            'product', 'quantity'
         ]
 
 
 @api_view(['POST'])
 def register_order(request):
-
+    print("def register_order(request)")
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-
+    data=request
+    print(data)
     order = Order.objects.create(
         firstname=serializer.validated_data['firstname'],
         lastname=serializer.validated_data['lastname'],
@@ -96,7 +98,7 @@ def register_order(request):
     for product in serializer_product.is_valid['products']:
         #product_id = get_object_or_404(Product, product["product"])
         OrderProduct.objects.create(
-            product=product.validated_data["product_id"],
+            product=product.validated_data["product"],
             order=order,
             quantity=product.validated_data["quantity"]
             )
