@@ -1,13 +1,9 @@
-import json
 from django.http import JsonResponse
-import phonenumbers
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from .models import Product, Order, OrderProduct
-from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, ListField
-from django.shortcuts import get_object_or_404
 
 
 def banners_list_api(request):
@@ -72,14 +68,15 @@ class OrderProductSerializer(ModelSerializer):
 
 class OrderSerializer(ModelSerializer):
     products = ListField(
-        child=OrderProductSerializer()
+        child=OrderProductSerializer(),
+        write_only=True
     )
 
     class Meta:
         model = Order
         fields = [
-            'firstname', 'lastname', 'phonenumber',
-            'address', 'products'
+            'id', 'firstname', 'lastname',
+            'phonenumber', 'address', 'products'
         ]
 
 
@@ -102,7 +99,7 @@ def register_order(request):
             order=order,
             quantity=product["quantity"]
             )
-    return JsonResponse({})
-
+    order_front = OrderSerializer(order).data
+    return Response(order_front)
 
         #product_id = get_object_or_404(Product, product["product"])
