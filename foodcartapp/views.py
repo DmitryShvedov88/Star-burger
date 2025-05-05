@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view
 from .models import Product, Order, OrderProduct
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, ListField
 from django.shortcuts import get_object_or_404
 
 
@@ -62,21 +62,27 @@ def product_list_api(request):
     })
 
 
-class OrderSerializer(ModelSerializer):
-    class Meta:
-        model = Order
-        fields = [
-            'first_name', 'last_name', 'contact_phone',
-            'adress', 'products'
-        ]
-
-
 class OrderProductSerializer(ModelSerializer):
     class Meta:
-        model = Order
+        model = OrderProduct
         fields = [
             'product', 'quantity'
         ]
+
+
+class OrderSerializer(ModelSerializer):
+    products = ListField(
+        child=OrderProductSerializer()
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            'firstname', 'lastname', 'phonenumber',
+            'address', 'products'
+        ]
+
+
 
 
 @api_view(['POST'])
@@ -84,22 +90,19 @@ def register_order(request):
     print("def register_order(request)")
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    data=request
-    print(data)
     order = Order.objects.create(
         firstname=serializer.validated_data['firstname'],
         lastname=serializer.validated_data['lastname'],
-        contact_phone=serializer.validated_data['phonenumber'],
-        adress=serializer.validated_data['address']
+        phonenumber=serializer.validated_data['phonenumber'],
+        address=serializer.validated_data['address']
         )
-
-    serializer_product = OrderProductSerializer(data=request.data)
-    serializer_product.is_valid(raise_exception=True)
-    for product in serializer_product.is_valid['products']:
-        #product_id = get_object_or_404(Product, product["product"])
+    for product in serializer.validated_data['products']:
         OrderProduct.objects.create(
-            product=product.validated_data["product"],
+            product=product["product"],
             order=order,
-            quantity=product.validated_data["quantity"]
+            quantity=product["quantity"]
             )
-    return Response({'error': 'Заказ записан'}, status=status.HTTP_201_CREATED)
+    return JsonResponse({})
+
+
+        #product_id = get_object_or_404(Product, product["product"])
