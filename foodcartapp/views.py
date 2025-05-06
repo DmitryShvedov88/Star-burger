@@ -80,8 +80,6 @@ class OrderSerializer(ModelSerializer):
         ]
 
 
-
-
 @api_view(['POST'])
 def register_order(request):
     print("def register_order(request)")
@@ -101,5 +99,3 @@ def register_order(request):
             )
     order_front = OrderSerializer(order).data
     return Response(order_front)
-
-        #product_id = get_object_or_404(Product, product["product"])
