@@ -39,7 +39,7 @@ class ProductQuerySet(models.QuerySet):
 
 class OrderQuerySet(models.QuerySet):
     def final_price(self):
-        return self.annotate(order_price=Sum(F('orders__product__price')*F('orders__quantity')))
+        return self.annotate(order_price=F('orders__price'))
 
 
 class ProductCategory(models.Model):
@@ -171,6 +171,13 @@ class OrderProduct(models.Model):
         related_name='orders',
         verbose_name='заказ',
     )
+    price = models.DecimalField(
+        'цена в заказе',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        default=0,
+    )
     quantity = models.PositiveIntegerField(
         validators=[
             MinValueValidator(0),
@@ -181,4 +188,4 @@ class OrderProduct(models.Model):
     )
 
     def __str__(self):
-        return f"{self.order} - {self.product} - {self.quantity}"
+        return f"{self.product.name}"

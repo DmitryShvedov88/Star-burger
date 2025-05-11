@@ -115,7 +115,21 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    print("OrderAdmin(admin.ModelAdmin)")
     inlines = [
         OrderProductInline
     ]
+    #TODO: дописать функцию рассчета в заказа при добавлении через админку
+    def save_formset(self, request, form, formset, change):
+        products = formset.save(commit=False)
+        print("products")
+        print(products)
+        for product in formset.deleted_objects:
+            product.delete()
+        for product in products:
+            print("product")            
+            print(product)
+            if not product.price:
+                product.price = product['product'].price*product['quantity']
+            product.save()
     pass
