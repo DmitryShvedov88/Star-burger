@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from .models import Product, Order, OrderProduct
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer, ListField
+from django.db import transaction
 
 
 def banners_list_api(request):
@@ -80,6 +81,7 @@ class OrderSerializer(ModelSerializer):
         ]
 
 
+@transaction.atomic
 @api_view(['POST'])
 def register_order(request):
     print("def register_order(request)")
