@@ -1,7 +1,9 @@
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Product
 from .models import ProductCategory
@@ -116,10 +118,23 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     print("OrderAdmin(admin.ModelAdmin)")
+
+    def response_post_save_change(self, request, obj):
+        next_url = request.GET.get('next')
+        res = super().response_post_save_change(request, obj)
+        if next_url and url_has_allowed_host_and_scheme(
+            url=next_url,
+            allowed_hosts={request.get_host()},
+            require_https=request.is_secure()
+        ):
+            return HttpResponseRedirect(next_url)
+        return res
+
     inlines = [
         OrderProductInline
     ]
     #TODO: дописать функцию рассчета в заказа при добавлении через админку
+    
     def save_formset(self, request, form, formset, change):
         products = formset.save(commit=False)
         print("products")
@@ -127,7 +142,7 @@ class OrderAdmin(admin.ModelAdmin):
         for product in formset.deleted_objects:
             product.delete()
         for product in products:
-            print("product")            
+            print("product")
             print(product)
             if not product.price:
                 product.price = product['product'].price*product['quantity']
