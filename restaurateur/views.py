@@ -92,7 +92,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    order_items = Order.objects.final_price()
+    order_items = Order.objects.filter(status__in=["CR","IP","IK","KP","DTC","IT","DE",]).final_price().order_by("status", "id")
     return render(request, template_name='order_items.html', context={
         'order_items': order_items,
     })

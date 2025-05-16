@@ -130,6 +130,22 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    class StatusCheck(models.TextChoices):
+        CREATED = "CR", "Создан"
+        IN_PROGRESS = "IP", "Принят в обработку"
+        IN_KITCHEN = "IK", "Передан на приготовление"
+        KICTHEN_PREPARATION = "KP", "Готовиться"
+        DELIVERED_TO_COURIER = "DTC", "Передан курьеру"
+        IN_TRANSIT = "IT", "В пути"
+        DELIVERED = "DE", "Доставлен"
+        CLOUSED = "CL", "Закрыт"
+    status = models.CharField(
+        max_length=25,
+        choices=StatusCheck.choices,
+        verbose_name="Статус",
+        db_index=True,
+        default=StatusCheck.CREATED
+    )
     firstname = models.CharField(
         'имя',
         max_length=50
