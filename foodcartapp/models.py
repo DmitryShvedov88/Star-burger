@@ -162,9 +162,12 @@ class Order(models.Model):
         'адрес',
         max_length=250
     )
-    products = models.ManyToManyField(
-        Product,
+    comment = models.TextField(
+        "Комментарий",
+        max_length=250,
+        blank=True
     )
+
     verbose_name = 'заказ'
     verbose_name_plural = 'заказы в ресторане'
 
