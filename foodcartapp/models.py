@@ -140,12 +140,24 @@ class Order(models.Model):
         IN_TRANSIT = "IT", "В пути"
         DELIVERED = "DE", "Доставлен"
         CLOUSED = "CL", "Закрыт"
+
+    class PaymentType(models.TextChoices):
+        CASH = "CA", 'Наличными'
+        TRANSFER = "TR", 'Электронно'
+
     status = models.CharField(
         max_length=25,
         choices=StatusCheck.choices,
         verbose_name="Статус",
         db_index=True,
         default=StatusCheck.CREATED
+    )
+    payment = models.CharField(
+        max_length=25,
+        choices=PaymentType.choices,
+        verbose_name="Способ оплаты",
+        db_index=True,
+        default=PaymentType.TRANSFER
     )
     firstname = models.CharField(
         'имя',
@@ -186,7 +198,6 @@ class Order(models.Model):
         blank=True,
         null=True
     )
-
     verbose_name = 'заказ'
     verbose_name_plural = 'заказы в ресторане'
 
