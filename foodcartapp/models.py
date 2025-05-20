@@ -42,6 +42,18 @@ class OrderQuerySet(models.QuerySet):
     def final_price(self):
         return self.annotate(order_price=F('orders__price'))
 
+    def get_restaurants_for_order(self):
+        items = RestaurantMenuItem.objects.filter(availability=True).select_related("restaurant", "product")
+        for order in self:
+            restaurant = []
+            for ordered_product in order.orders.values("product"):
+                matching_items = [item.restaurant for item in items
+                                  if ordered_product["product"] == item.product.id]
+                if matching_items:
+                    restaurant.extend(matching_items)
+                order.restaurant = restaurant[0] if restaurant else None
+        return self
+
 
 class ProductCategory(models.Model):
     name = models.CharField(
@@ -198,6 +210,13 @@ class Order(models.Model):
         blank=True,
         null=True
     )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        verbose_name="ресторан",
+        blank=True,
+        null=True,
+        related_name="restaurants")
     verbose_name = 'заказ'
     verbose_name_plural = 'заказы в ресторане'
 
