@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from phonenumber_field.modelfields import PhoneNumberField
-from django.db.models import F
+from django.db.models import F, Sum
 from django.utils import timezone
 
 
@@ -40,18 +40,28 @@ class ProductQuerySet(models.QuerySet):
 
 class OrderQuerySet(models.QuerySet):
     def final_price(self):
-        return self.annotate(order_price=F('orders__price'))
+        return self.annotate(order_price=Sum(F('orders__price') * F('orders__quantity')))
 
     def get_restaurants_for_order(self):
-        items = RestaurantMenuItem.objects.filter(availability=True).select_related("restaurant", "product")
+        items = RestaurantMenuItem.objects.filter(
+            availability=True
+            ).select_related("restaurant", "product")
         for order in self:
-            restaurant = []
-            for ordered_product in order.orders.values("product"):
-                matching_items = [item.restaurant for item in items
-                                  if ordered_product["product"] == item.product.id]
-                if matching_items:
-                    restaurant.extend(matching_items)
-                order.restaurant = restaurant[0] if restaurant else None
+            order_product_ids = set(
+                order.orders.values_list('product_id', flat=True)
+                )
+            restaurants = set()
+
+            for ordered_product in items:
+                restaurant_products = set(
+                    items.filter(restaurant=ordered_product.restaurant)
+                    .values_list('product_id', flat=True)
+                )
+                if order_product_ids.issubset(restaurant_products):
+                    restaurants.add(ordered_product.restaurant)
+            order.available_restaurants = list(restaurants)
+            if restaurants:
+                order.restaurant = next(iter(restaurants))
         return self
 
 
@@ -217,8 +227,10 @@ class Order(models.Model):
         blank=True,
         null=True,
         related_name="restaurants")
-    verbose_name = 'заказ'
-    verbose_name_plural = 'заказы в ресторане'
+
+    class Meta:
+        verbose_name = 'заказ'
+        verbose_name_plural = 'заказы в ресторане'
 
     objects = OrderQuerySet.as_manager()
 

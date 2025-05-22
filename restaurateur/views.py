@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
-
+from django.db import transaction
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 
 
@@ -94,19 +94,23 @@ def view_restaurants(request):
 def view_orders(request):
     order_items = Order.objects.filter(
         status__in=["CR", "IP", "IK", "KP", "DTC", "IT", "DE"]
-    ).final_price().select_related("restaurant").get_restaurants_for_order()
-    for order in order_items:
-        new_status = None
-        if order.status == "IP" and order.restaurant:
-            new_status = "IK"
-        elif order.status == "IK" and order.restaurant:
-            new_status = "KP"
-        elif order.status == "KP" and order.restaurant:
-            new_status = "DTC"
+    ).final_price().prefetch_related(
+        'orders__product'
+        ).select_related("restaurant").get_restaurants_for_order()
+    with transaction.atomic():
+        for order in order_items:
+            new_status = None
+            if order.status == "IP" and order.restaurant:
+                new_status = "IK"
+            elif order.status == "IK" and order.restaurant:
+                new_status = "KP"
+            elif order.status == "KP" and order.restaurant:
+                new_status = "DTC"
+
         if new_status:
             order.status = new_status
             order.save()
-            print(order.status)
+
     return render(request, template_name='order_items.html', context={
         'order_items': order_items,
     })
