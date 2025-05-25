@@ -60,8 +60,6 @@ class OrderQuerySet(models.QuerySet):
                 if order_product_ids.issubset(restaurant_products):
                     restaurants.add(ordered_product.restaurant)
             order.available_restaurants = list(restaurants)
-            if restaurants:
-                order.restaurant = next(iter(restaurants))
         return self
 
 
