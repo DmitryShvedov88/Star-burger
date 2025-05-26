@@ -1,3 +1,4 @@
+import requests
 from django import forms
 from django.shortcuts import redirect, render
 from django.views import View
@@ -9,6 +10,11 @@ from django.contrib.auth import views as auth_views
 
 from django.db import transaction
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
+from geopy.distance import geodesic
+from django.conf import settings
+
+
+YANDEX_API_KEY = settings.YANDEX_API_KEY
 
 
 class Login(forms.Form):
@@ -63,6 +69,32 @@ def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
 
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(base_url, params={
+        "geocode": address,
+        "apikey": apikey,
+        "format": "json",
+    })
+    response.raise_for_status()
+    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+    return lon, lat
+
+
+def calculate_distance(delivery_coords, restaurant_coords):
+    restaurant_coords = fetch_coordinates(YANDEX_API_KEY , restaurant_coords)
+    delivery_coords = fetch_coordinates(YANDEX_API_KEY, delivery_coords)
+    if delivery_coords is None or restaurant_coords is None:
+        return None
+    return geodesic(restaurant_coords, delivery_coords).km
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_products(request):
     restaurants = list(Restaurant.objects.order_by('name'))
@@ -92,6 +124,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
+    restaurant_dist = []
     order_items = Order.objects.filter(
         status__in=["CR", "IP", "IK", "KP", "DTC", "IT", "DE"]
     ).final_price().prefetch_related(
@@ -106,6 +139,13 @@ def view_orders(request):
                 new_status = "KP"
             elif order.status == "KP" and order.restaurant:
                 new_status = "DTC"
+            for restaurant in order.available_restaurants:
+                distance = calculate_distance(order.address, restaurant.address)
+                if distance is None:
+                    order.available_restaurants = None
+                    break
+                restaurant_dist.append({"distance": round(distance, 3), "restaurant": restaurant.name})
+            order.available_restaurants = sorted(restaurant_dist, key=lambda x:["distance"])
 
         if new_status:
             order.status = new_status

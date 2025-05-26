@@ -48,6 +48,8 @@ python -m venv venv
 - Windows: `.\venv\Scripts\activate`
 - MacOS/Linux: `source venv/bin/activate`
 
+Все необходимые переменные окружения и зависимости находятся в файликах .ENV.EXAMPLE и requirements.txt
+Файл .ENV.EXAMPLE содержит переменную окружения SECRET_KEY_DJANGO_PROJECT и YANDEX_API_KEY.
 
 Установите зависимости в виртуальное окружение:
 ```sh
