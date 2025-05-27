@@ -8,7 +8,6 @@ from django.db import transaction
 
 
 def banners_list_api(request):
-    # FIXME move data to db?
     return JsonResponse([
         {
             'title': 'Burger',
@@ -32,7 +31,6 @@ def banners_list_api(request):
 
 
 def product_list_api(request):
-    print("def product_list_api(request):")
     products = Product.objects.select_related('category').available()
     dumped_products = []
     for product in products:
@@ -84,7 +82,6 @@ class OrderSerializer(ModelSerializer):
 @transaction.atomic
 @api_view(['POST'])
 def register_order(request):
-    print("def register_order(request)")
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order = Order.objects.create(
