@@ -20,8 +20,6 @@ class Place(models.Model):
     request_time = models.TimeField(
         auto_now=True,
         verbose_name="Время запроса",
-        blank=True,
-        null=True
     )
 
     def __str__(self):
