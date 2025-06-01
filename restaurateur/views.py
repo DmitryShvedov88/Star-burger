@@ -1,3 +1,4 @@
+from time import timezone
 import requests
 from django import forms
 from django.shortcuts import redirect, render
@@ -7,7 +8,7 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
-
+from places.models import Place
 from django.db import transaction
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
 from geopy.distance import geodesic
@@ -124,7 +125,7 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
-    restaurant_dist = []
+
     order_items = Order.objects.filter(
         status__in=["CR", "IP", "IK", "KP", "DTC", "IT", "DE"]
     ).final_price().prefetch_related(
@@ -139,8 +140,12 @@ def view_orders(request):
                 new_status = "KP"
             elif order.status == "KP" and order.restaurant:
                 new_status = "DTC"
+
+            restaurant_dist = []
             for restaurant in order.available_restaurants:
-                distance = calculate_distance(order.address, restaurant.address)
+                order_place, _ = Place.objects.get_or_create(address=order.address)
+                restaurant_place, _ = Place.objects.get_or_create(address=restaurant.address)        
+                distance = calculate_distance(order_place.address, restaurant_place.address)
                 if distance is None:
                     order.available_restaurants = None
                     break
