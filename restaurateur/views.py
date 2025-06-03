@@ -12,6 +12,7 @@ from django.db import transaction
 from foodcartapp.models import Product, Restaurant, Order
 from geopy.distance import geodesic
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 
 YANDEX_API_KEY = settings.YANDEX_API_KEY
@@ -152,12 +153,15 @@ def view_orders(request):
 
             restaurant_dist = []
             for restaurant in order.available_restaurants:
-                order_place, _ = Place.objects.get_or_create(
-                    address=order.address
-                )
-                restaurant_place, _ = Place.objects.get_or_create(
-                    address=restaurant.address
-                )
+                try:
+                    order_place = Place.objects.get(
+                        address=order.address
+                    )
+                    restaurant_place = Place.objects.get(
+                        address=restaurant.address
+                    )
+                except ObjectDoesNotExist:
+                    return None
                 distance = calculate_distance(
                     order_place.address, restaurant_place.address
                 )
@@ -168,7 +172,7 @@ def view_orders(request):
                     {
                         "distance": round(distance, 3),
                         "restaurant": restaurant.name
-                        }
+                    }
                 )
             order.available_restaurants = sorted(
                 restaurant_dist, key=lambda x: ["distance"]
@@ -180,4 +184,5 @@ def view_orders(request):
 
     return render(request, template_name='order_items.html', context={
         'order_items': order_items,
-    })
+        }
+    )
