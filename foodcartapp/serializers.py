@@ -23,3 +23,19 @@ class OrderSerializer(ModelSerializer):
             'id', 'firstname', 'lastname',
             'phonenumber', 'address', 'products'
         ]
+
+    def create(self, validated_data):
+        order = Order.objects.create(
+            firstname=validated_data['firstname'],
+            lastname=validated_data['lastname'],
+            phonenumber=validated_data['phonenumber'],
+            address=validated_data['address']
+            )
+        for product in validated_data['products']:
+            OrderProduct.objects.create(
+                product=product["product"],
+                order=order,
+                price=product['product'].price*product['quantity'],
+                quantity=product["quantity"]
+            )
+        return order

@@ -3,7 +3,7 @@ from django.templatetags.static import static
 from rest_framework.decorators import api_view
 
 from foodcartapp.serializers import OrderSerializer
-from .models import Product, Order, OrderProduct
+from .models import Product
 from rest_framework.response import Response
 from django.db import transaction
 
@@ -63,18 +63,4 @@ def product_list_api(request):
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    order = Order.objects.create(
-        firstname=serializer.validated_data['firstname'],
-        lastname=serializer.validated_data['lastname'],
-        phonenumber=serializer.validated_data['phonenumber'],
-        address=serializer.validated_data['address']
-        )
-    for product in serializer.validated_data['products']:
-        OrderProduct.objects.create(
-            product=product["product"],
-            order=order,
-            price=product['product'].price*product['quantity'],
-            quantity=product["quantity"]
-            )
-    order_front = OrderSerializer(order).data
-    return Response(order_front)
+    return Response(serializer.data)
