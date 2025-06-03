@@ -31,11 +31,14 @@ class OrderSerializer(ModelSerializer):
             phonenumber=validated_data['phonenumber'],
             address=validated_data['address']
             )
-        for product in validated_data['products']:
-            OrderProduct.objects.create(
+        order_products = [
+            OrderProduct(
                 product=product["product"],
                 order=order,
                 price=product['product'].price*product['quantity'],
                 quantity=product["quantity"]
             )
+            for product in validated_data['products']
+        ]
+        OrderProduct.objects.bulk_create(order_products)
         return order
