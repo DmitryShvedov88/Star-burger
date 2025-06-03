@@ -257,8 +257,7 @@ class OrderProduct(models.Model):
     )
     quantity = models.PositiveIntegerField(
         validators=[
-            MinValueValidator(0),
-            MaxValueValidator(10)
+            MinValueValidator(1)
             ],
         verbose_name='количество',
         default=1
