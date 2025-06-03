@@ -1,9 +1,10 @@
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
+
+from foodcartapp.serializers import OrderSerializer
 from .models import Product, Order, OrderProduct
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, ListField
 from django.db import transaction
 
 
@@ -55,28 +56,6 @@ def product_list_api(request):
         'ensure_ascii': False,
         'indent': 4,
     })
-
-
-class OrderProductSerializer(ModelSerializer):
-    class Meta:
-        model = OrderProduct
-        fields = [
-            'product', 'quantity'
-        ]
-
-
-class OrderSerializer(ModelSerializer):
-    products = ListField(
-        child=OrderProductSerializer(),
-        write_only=True
-    )
-
-    class Meta:
-        model = Order
-        fields = [
-            'id', 'firstname', 'lastname',
-            'phonenumber', 'address', 'products'
-        ]
 
 
 @transaction.atomic
