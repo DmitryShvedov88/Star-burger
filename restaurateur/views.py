@@ -161,7 +161,7 @@ def view_orders(request):
                         address=restaurant.address
                     )
                 except ObjectDoesNotExist:
-                    return None
+                    break
                 distance = calculate_distance(
                     order_place.address, restaurant_place.address
                 )
