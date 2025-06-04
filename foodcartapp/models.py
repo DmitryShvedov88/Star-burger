@@ -200,7 +200,7 @@ class Order(models.Model):
         max_length=250,
         blank=True
     )
-    registreted_at = models.DateTimeField(
+    registered_at = models.DateTimeField(
         "Дата создания",
         default=timezone.now,
         blank=True,
